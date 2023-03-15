@@ -1,0 +1,59 @@
+package omp 2
+package gpu 0 neigh no
+#-------------------------------------------------------------------------------
+units real
+dimension 3
+boundary p p p 
+atom_style full 
+bond_style hybrid quartic
+pair_style hybrid lj/cut/gpu 11
+#-------------------------------------------------------------------------------
+region box block 0 100 0 100 0 100
+create_box 6 box bond/types 1 extra/bond/per/atom 2 extra/special/per/atom 10
+molecule 3mer 3mer.data
+molecule 4mer 4mer.data
+molecule BPA BPA.data
+create_atoms 0 random 40 12345 NULL mol 3mer 25
+create_atoms 2 random 60 12345 NULL mol 4mer 25#overlap 0.5 maxtry 50
+create_atoms 4 random 180 12345 NULL mol BPA 25#overlap 0.5 maxtry 50
+special_bonds lj 1 1 1
+mass *  55.565
+neighbor 2.0 bin
+neigh_modify every 2 delay 0 check yes
+#-------------------------------------------------------------------------------
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+pair_coeff   * *   lj/cut/gpu 1.519 ${sigma}
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#-------------------------------------------------------------------------------
+velocity all create 300 1238123 dist gaussian mom yes
+minimize 1.0e-4 1.0e-6 100 1000
+timestep 5
+thermo 100
+thermo_style custom step density temp
+#------------------------------------------------------------------------------- 
+fix   fxnpt all npt temp 300 300 1000 iso 1 1 5000
+dump 1 all custom 1000 dump1.atom id mol type x y z
+run   100000
+unfix fxnpt
+fix   fxnpt all npt temp 300 300 1000 iso 1 1 5000
+run   100000
+unfix fxnpt
+fix   fxnpt all npt temp 300 300 1000 iso 1 1 5000
+run   100000
+unfix fxnpt
+fix   fxnpt all npt temp 300 300 1000 iso 1 1 5000
+run   100000
+write_data single-mixture-initiate.data
+run 1
+#-------------------------------------------------------------------------------
+undump 1
+unfix fxnpt
+#-------------------------------------------------------------------------------
+replicate 2 2 5
+reset_timestep 0    
+fix   fxnpt all npt temp 300 300 1000 iso 0.0 0.0 5000
+dump 1 all custom 1000 dump2.atom id mol type x y z
+run 100000
+write_data single-mixture-bigger.data
+run 1

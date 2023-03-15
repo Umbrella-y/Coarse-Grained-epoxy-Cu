@@ -1,0 +1,54 @@
+####distribution
+#4   5    
+#|   |   
+#1---2---3
+#        |
+#        6
+
+BPA {
+  write_once("In Init") {
+    units           real
+    atom_style      full
+    bond_style      quartic
+    angle_style     harmonic
+    pair_style      lj/cut 2.5
+  }
+
+  write("Data Atoms") {
+    #     ID Type    charge       x          y        z
+    $atom:2  $mol:1 @atom:CH 0 1.06431 3.97492 1.12808
+    $atom:3  $mol:1 @atom:AC 0 1.84723 2.01498 -2.24569
+    $atom:1  $mol:1 @atom:AC 0 -2.41499 2.14497 1.49582
+
+  }
+
+  # There are 2 atom types: "CH" and "AC"
+  # CH = chain bead  && AC = actice bead
+  write_once("Data Masses") {
+    @atom:CH    55.565
+    @atom:AC    55.565
+  }
+
+  write("Data Bonds") {
+    $bond:c1 @bond:QUA $atom:3 $atom:2
+    $bond:c2 @bond:QUA $atom:1 $atom:2
+  }
+  write("Data Angles") {
+    $angle:a1    @angle:1  $atom:3  $atom:2  $atom:1 
+  }
+
+  write_once("In Settings") {
+    pair_coeff   @atom:CH @atom:CH   lj/cut           1.519 4.383
+    pair_coeff   @atom:AC @atom:AC   lj/cut           1.519 4.383
+    angle_coeff  @angle:1           harmonic          0.613     180
+
+    #           bond-type       k       b1      b2   rc    u0          #####rc = 1.343*sigma
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+
+
+    # (Interactions between different atoms are determined by mixing rules.)
+  }
+} # "EPN"
+
+

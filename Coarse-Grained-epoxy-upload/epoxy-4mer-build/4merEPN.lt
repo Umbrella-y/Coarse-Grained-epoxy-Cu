@@ -1,0 +1,81 @@
+####distribution
+#5       
+#|       
+#1---2---3---4
+#    |   |   |
+#    6   7   8
+
+EPN {
+  write_once("In Init") {
+    units           real
+    atom_style      full
+    bond_style      quartic
+    angle_style     harmonic
+    pair_style      lj/cut 2.5
+  }
+
+  write("Data Atoms") {
+    #     ID Type    charge       x          y        z
+    $atom:8  $mol:1 @atom:CH 0 11.01395 -8.82085 -8.85037
+    $atom:4  $mol:1 @atom:CH 0 10.17672 -7.85191 -3.70641
+    $atom:3  $mol:1 @atom:CH 0 5.718093 -4.93276 -3.62592
+    $atom:7  $mol:1 @atom:AC 0 3.806608 -9.51609 -3.01874
+    $atom:6  $mol:1 @atom:AC 0 1.485780 -6.61746 -7.59450
+    $atom:2  $mol:1 @atom:AC 0 0.839701 -3.04226 -4.10535
+    $atom:1  $mol:1 @atom:AC 0 -2.72788 -1.09130 -1.51440
+    $atom:5  $mol:1 @atom:AC 0 -3.59942  3.63014 -3.15759
+
+  }
+
+  # There are 2 atom types: "CH" and "AC"
+  # CH = chain bead  && AC = actice bead
+  write_once("Data Masses") {
+    @atom:CH    55.565
+    @atom:AC    55.565
+  }
+
+  write("Data Bonds") {
+    $bond:c1 @bond:QUA $atom:1 $atom:5
+    $bond:c2 @bond:QUA $atom:1 $atom:2
+    $bond:c3 @bond:QUA $atom:2 $atom:6
+    $bond:c4 @bond:QUA $atom:2 $atom:3
+    $bond:c5 @bond:QUA $atom:3 $atom:7
+    $bond:c6 @bond:QUA $atom:3 $atom:4
+    $bond:c7 @bond:QUA $atom:4 $atom:8
+  }
+
+#5       
+#|       
+#1---2---3---4
+#    |   |   |
+#    6   7   8
+
+
+
+
+  write("Data Angles") {
+    $angle:a1    @angle:1  $atom:5  $atom:1  $atom:2
+    $angle:a2    @angle:1  $atom:1  $atom:2  $atom:3 
+    $angle:a3    @angle:1  $atom:1  $atom:2  $atom:6 
+    $angle:a4    @angle:1  $atom:6  $atom:2  $atom:3 
+    $angle:a5    @angle:1  $atom:2  $atom:3  $atom:7 
+    $angle:a6    @angle:1  $atom:2  $atom:3  $atom:4 
+    $angle:a7    @angle:1  $atom:7  $atom:3  $atom:4 
+    $angle:a8    @angle:1  $atom:3  $atom:4  $atom:8 
+  }
+
+  write_once("In Settings") {
+    pair_coeff   @atom:CH @atom:CH   lj/cut           1.519 4.383
+    pair_coeff   @atom:AC @atom:AC   lj/cut           1.519 4.383
+    angle_coeff  @angle:1           harmonic          0.613     180
+
+    #           bond-type       k       b1      b2   rc    u0          #####rc = 1.343*sigma
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+
+
+    # (Interactions between different atoms are determined by mixing rules.)
+  }
+} # "EPN"
+
+

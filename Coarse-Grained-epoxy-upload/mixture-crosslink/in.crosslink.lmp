@@ -1,0 +1,58 @@
+package omp 2
+package gpu 0 neigh no
+#---------------------------------------------------------------------------------
+units           real
+atom_style      full
+bond_style      hybrid quartic #harmonic 
+# angle_style     hybrid harmonic
+pair_style      hybrid lj/cut/gpu 11
+special_bonds lj 1 1 1 #angle yes
+boundary p p p
+# 3mer ::: 4mer ::: BPA equal 2:3:9
+read_data single-mixture-initiate.data extra/bond/per/atom 10 extra/special/per/atom 100#000
+replicate 3 3 18
+neighbor 2 bin
+neigh_modify every 1 delay 0 check yes
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+pair_coeff   * *   lj/cut/gpu 1.519 ${sigma}
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#---------------------------------------------------------------------------------
+velocity all create 300 1238123 dist gaussian mom yes
+comm_modify mode single cutoff 20
+timestep 5
+thermo 100
+thermo_style custom step temp density 
+fix   fxnpt all npt temp 300.0 300.0 500.0 iso 1.0 1.0 5000.0 #drag 1.0
+run 100000
+fix   fxnpt all npt temp 300.0 500.0 500.0 iso 1.0 1.0 5000.0 #drag 1.0
+run 200000
+#---------------------------------------------------------------------------------
+unfix fxnpt 
+fix   fxnpt all npt temp 500.0 500.0 1000.0 iso 1.0 1.0 5000.0 #drag 1.0
+#--------------cross-link settings---------------------
+fix bond all bond/create 10 2 4 5.7 1 prob 0.01 12345 iparam 2 1 jparam 2 1#runstep / 10 = bond_created
+#fix bond1 all bond/create 10 2 6 5.7 1 prob 0.01 12345 #runstep / 10 = bond_created
+fix bond2 all bond/create 10 6 4 5.7 1 prob 0.01 12345 iparam 2 1 jparam 2 1#runstep / 10 = bond_created
+variable bond equal f_bond[2]
+#variable bond1 equal f_bond1[2]
+variable bond2 equal f_bond2[2]
+#------------------------------------------------------
+thermo_style custom  step temp density vol f_bond[2] f_bond2[2]
+dump                1 all atom 100 crosslink1.atom
+fix p  all print 1000 "${bond},${bond2}" file log.txt screen no
+run   500000
+unfix p 
+unfix fxnpt
+undump 1
+fix   fxnpt all npt temp 500.0 300.0 1000.0 iso 1.0 1.0 5000.0 #drag 1.0
+dump                1 all atom 1000 cooling.atom
+run 20000
+#---------------------------------------------------------------------------------
+unfix fxnpt 
+fix   fxnpt all npt temp 300.0 300.0 1000.0 iso 1.0 1.0 5000.0 #drag 1.0
+run 10000
+write_data crosslinked-single.data
+run 1
+
+

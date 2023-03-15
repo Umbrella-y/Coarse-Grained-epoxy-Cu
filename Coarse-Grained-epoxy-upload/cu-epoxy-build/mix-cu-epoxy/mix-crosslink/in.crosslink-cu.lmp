@@ -1,0 +1,37 @@
+package omp 2
+read_restart cu-shriked.restart# restartfile
+bond_style      hybrid quartic #harmonic 
+pair_style      hybrid lj/cut 11 eam/alloy 
+special_bonds lj 1 1 1 #angle yes
+change_box all z final 0 365 boundary p p f 
+#----------------------------------------------------------------------------------
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+variable epsilone equal 1.519*3
+mass 1*6  55.565
+mass 7 63.5
+pair_coeff   1*6 1*6  lj/cut 1.519 ${sigma}
+pair_coeff * * eam/alloy Cu_mishin1.eam.alloy NULL NULL NULL NULL NULL NULL Cu
+pair_coeff 1*6 7 lj/cut ${epsilone} 4.570
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#----------------------------------------------------------------------------------
+write_data initiate-state.data  
+neighbor 2 bin
+neigh_modify every 5 delay 0 check yes one 1000 page 10000
+#minimize 1e-4 1e-6 100 1000
+reset_timestep 0    
+velocity all create 400 1238123 dist gaussian mom yes
+#-----------------------------------------------------------------------
+timestep 1
+thermo 1
+#------------6 guding--------------------------------
+fix bound bound setforce 0 0 0
+velocity bound set 0 0 0 sum no 
+#------------------------------------------------------
+fix   fxnpt epoxy npt temp 400.0 300.0 1000.0 z 1.0 1.0 5000.0 #y 1 1 5000#drag 1.0
+fix   fxnpt1 thermo  nvt temp 300.0 300.0 1000.0 #z 1.0 1.0 5000.0
+thermo_style custom step press density
+dump                1 all atom 1000 Cu-shrink.atom
+run                 100000
+write_data shrinked-uniform.data 
+write_restart cu-uniformed.restart

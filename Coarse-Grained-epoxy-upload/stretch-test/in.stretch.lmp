@@ -1,0 +1,45 @@
+package omp 2
+package gpu 0 neigh no
+#------------------------------------------------------
+units           real
+atom_style      full
+bond_style      hybrid quartic #harmonic 
+pair_style      hybrid lj/cut/gpu 11
+special_bonds lj 1 1 1 angle yes
+boundary p p p
+#------------------------------------------------------
+# 3mer ::: 4mer ::: BPA equal 2:3:9
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+pair_coeff   * *   lj/cut 1.519 ${sigma}
+#pair_modify pair lj/cut  special lj 0 0 1
+#pair_coeff   2 2   lj/cut 1.519 4.383
+#pair_coeff   1 2   lj/cut 1.519 4.383
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#------------------------------------------------------
+velocity all create 300 1238123 dist gaussian mom yes
+timestep 1.0
+thermo 100
+#------------6 计算设置--------------------------------
+compute    1 all stress/atom NULL
+compute    2 all reduce sum c_1[1] c_1[2] c_1[3] 
+variable Vol equal vol
+variable   stressx equal c_2[1]/(v_Vol)
+variable   stressy equal c_2[2]/(v_Vol)
+variable   stressz equal c_2[3]/(v_Vol)
+variable   sigmazz equal "-pzz/10000" # units equal GPa
+#variable pz equal -pzz/10000
+#应变
+variable l_z equal "lz"
+variable lz0 equal ${l_z}
+variable strain equal (lz-v_lz0)/v_lz0
+#------------------------------------------------------
+#fix   fxnpt all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0 #drag 1.0
+thermo_style custom step press v_strain v_stressx v_stressy v_stressz v_sigmazz
+thermo                1
+fix                    2 all nvt temp 300 300 100
+fix                    3 all deform 1 z erate 1e-6 remap x
+dump                1 all atom 1000 stretch.*.atom
+
+fix p  all print 100 "${strain},${stressx},${stressy},${stressz},${sigmazz}" file stress-strain.txt screen no
+run                 1000000

@@ -1,0 +1,10 @@
+    pair_coeff   1 1   lj/cut           1.519 4.383
+    pair_coeff   2 2   lj/cut           1.519 4.383
+    angle_coeff  1           harmonic          0.613     180
+
+    #           bond-type       k       b1      b2   rc    u0          #####rc = 1.343*sigma
+    bond_coeff   1      5.901   -3.326  0    5.887 102.082
+    bond_coeff   1      5.901   -3.326  0    5.887 102.082
+
+
+    # (Interactions between different atoms are determined by mixing rules.)

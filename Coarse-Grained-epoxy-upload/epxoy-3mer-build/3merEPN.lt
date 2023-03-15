@@ -1,0 +1,64 @@
+####distribution
+#4   5    
+#|   |   
+#1---2---3
+#        |
+#        6
+
+EPN {
+  write_once("In Init") {
+    units           real
+    atom_style      full
+    bond_style      quartic
+    angle_style     harmonic
+    pair_style      lj/cut 2.5
+  }
+
+  write("Data Atoms") {
+    #     ID Type    charge       x          y        z
+    $atom:3  $mol:1 @atom:CH 0 5.22229  1.29511  0.191525
+    $atom:2  $mol:1 @atom:CH 0 -0.1454  2.50238 -0.360909
+    $atom:1  $mol:1 @atom:CH 0 -5.0291  1.76321  0.128712
+    $atom:6  $mol:1 @atom:AC 0 7.28410 -1.04290 -3.679005
+    $atom:5  $mol:1 @atom:AC 0 1.41336  6.64936  0.586875
+    $atom:4  $mol:1 @atom:AC 0 -3.7275  4.33795  3.960407
+  }
+
+  # There are 2 atom types: "CH" and "AC"
+  # CH = chain bead  && AC = actice bead
+  write_once("Data Masses") {
+    @atom:CH    55.565
+    @atom:AC    55.565
+  }
+
+  write("Data Bonds") {
+    $bond:c1 @bond:QUA $atom:1 $atom:4
+    $bond:c2 @bond:QUA $atom:1 $atom:2
+    $bond:c3 @bond:QUA $atom:2 $atom:5
+    $bond:c4 @bond:QUA $atom:2 $atom:3
+    $bond:c5 @bond:QUA $atom:3 $atom:6
+  }
+  write("Data Angles") {
+    $angle:a1    @angle:1  $atom:3  $atom:2  $atom:1 
+    $angle:a2    @angle:1  $atom:4  $atom:1  $atom:2 
+    $angle:a3    @angle:1  $atom:2  $atom:3  $atom:6 
+    $angle:a4    @angle:1  $atom:1  $atom:2  $atom:5 
+    $angle:a5    @angle:1  $atom:5  $atom:2  $atom:3 
+
+  }
+
+  write_once("In Settings") {
+    pair_coeff   @atom:CH @atom:CH   lj/cut           1.519 4.383
+    pair_coeff   @atom:AC @atom:AC   lj/cut           1.519 4.383
+    angle_coeff  @angle:1           harmonic          0.613     180
+
+    #           bond-type       k       b1      b2   rc    u0          #####rc = 1.343*sigma
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+    bond_coeff   @bond:QUA      5.901   -3.326  0    5.887 102.082
+
+
+    # (Interactions between different atoms are determined by mixing rules.)
+  }
+} # "EPN"
+
+

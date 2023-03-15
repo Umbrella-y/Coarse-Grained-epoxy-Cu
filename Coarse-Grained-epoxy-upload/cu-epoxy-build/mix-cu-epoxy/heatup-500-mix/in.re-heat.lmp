@@ -1,0 +1,64 @@
+package omp 2
+#package gpu 0 neigh no
+read_restart cu-epoxy.restart
+bond_style      hybrid quartic #harmonic 
+pair_style      hybrid lj/cut/omp 11 eam/alloy/omp #hybrid lj/cut/gpu 11 eam/alloy/gpu
+special_bonds lj 1 1 1 
+
+variable len equal 10
+variable truelen equal v_len*3.615
+variable fixlen equal 0.5*v_truelen
+region cu block INF INF INF INF 1 ${len} 
+#----------------------------------------------------------------------------------
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+variable epsilone equal      1.519*3
+mass 1*6  55.565
+mass 7 63.5
+pair_coeff   1*6 1*6  lj/cut/omp 1.519 ${sigma}
+pair_coeff * * eam/alloy/omp Cu_mishin1.eam.alloy NULL NULL NULL NULL NULL NULL Cu
+pair_coeff 1*6 7 lj/cut/omp ${epsilone} 4.570
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#----------------------------------------------------------------------------------
+group cu region cu 
+region bound block INF INF INF INF INF ${fixlen} units box
+group bound region bound
+region thermo block INF INF INF INF ${fixlen}  ${truelen}  units box
+group thermo region thermo 
+region epoxy block INF INF INF INF ${truelen}  INF units box
+group epoxy region epoxy 
+neighbor 2 bin
+neigh_modify every 5 delay 0 check yes one 1000 page 10000
+minimize 1e-4 1e-6 100 1000
+reset_timestep 0    
+velocity all create 300 1238123 dist gaussian mom yes
+timestep 1
+variable Tdamp equal 100.0*dt
+variable Pdamp equal 1000.0*dt
+thermo 1
+#------------6 guding--------------------------------
+fix bound bound setforce 0 0 0
+velocity bound set 0 0 0 sum no 
+#------------------------------------------------------
+fix   fxnpt all      npt temp 300.0 500.0 ${Tdamp} aniso 1 1 ${Pdamp}
+#fix   fxnvt thermo     nvt temp 300.0 300.0 ${Tdamp} #x 1 1 ${Pdamp} y 1 1 ${Pdamp} 
+thermo_style custom step press density pxx pyy pzz
+dump                1 all atom 100 Cu-epoxy-500.atom
+#fix wall all wall/reflect zlo EDGE zhi EDGE
+##----------------------------------------------------------------------------
+velocity bound set 0 0 0 sum no 
+fix bound bound setforce 0 0 0
+run 1
+##----------------------------------------------------------------------------
+run                 100000
+unfix fxnpt 
+fix   fxnpt all      npt temp 500.0 500.0 ${Tdamp} aniso 1 1 ${Pdamp}
+run                 500000
+unfix fxnpt 
+fix   fxnpt all      npt temp 500.0 300.0 ${Tdamp} aniso 1 1 ${Pdamp}
+run                 100000
+unfix fxnpt 
+fix   fxnpt all      npt temp 300.0 300.0 ${Tdamp} aniso 1 1 ${Pdamp}
+run                 100000
+write_data cu-mixed-500.data 
+write_restart cu-mixed-500.restart

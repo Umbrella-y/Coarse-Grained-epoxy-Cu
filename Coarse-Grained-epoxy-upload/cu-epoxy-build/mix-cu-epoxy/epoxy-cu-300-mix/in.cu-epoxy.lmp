@@ -1,0 +1,67 @@
+package omp 2
+package gpu 0 neigh no
+#----------------------------------------------------------------------------------
+units           real
+atom_style      full
+bond_style      hybrid quartic #harmonic 
+# angle_style     hybrid harmonic
+pair_style      hybrid lj/cut/gpu 11 eam/alloy/gpu
+special_bonds lj 1 1 1 #angle yes
+boundary p p p
+#region box block -0.431481 230.659 -0.386973 215.1070 5.909974 470
+#create_box 7 box bond/types 1  extra/bond/per/atom 10 extra/special/per/atom 100
+#distance between 2 atom 2.55619--xxx    
+read_data Only-Cu.data extra/bond/per/atom 10 extra/special/per/atom 100
+variable len equal 10
+variable truelen equal v_len*3.615
+variable fixlen equal 0.5*v_truelen
+region cu block INF INF INF INF 1 ${len} 
+#----------------------------------------------------------------------------------
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+variable epsilone equal 1.519*3
+mass 1*6  55.565
+mass 7 63.5
+pair_coeff   1*6 1*6  lj/cut/gpu 1.519 ${sigma}
+pair_coeff * * eam/alloy/gpu Cu_mishin1.eam.alloy NULL NULL NULL NULL NULL NULL Cu
+pair_coeff 1*6 7 lj/cut/gpu ${epsilone} 4.570
+#pair_modify pair lj/cut  special lj 0 0 1
+#pair_coeff   2 2   lj/cut 1.519 4.383
+#pair_coeff   1 2   lj/cut 1.519 4.383
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+#----------------------------------------------------------------------------------
+# 3mer ::: 4mer ::: BPA equal 2:3:9
+read_data single-mixture-final.data add append offset 0 0 0 0 0 shift -15 -15 50 #units box
+group cu region cu 
+region bound block INF INF INF INF INF ${fixlen} units box
+group bound region bound
+region thermo block INF INF INF INF ${fixlen}  ${truelen}  units box
+group thermo region thermo 
+region epoxy block INF INF INF INF ${truelen}  INF units box
+group epoxy region epoxy 
+neighbor 2 bin
+neigh_modify every 5 delay 0 check yes one 1000 page 10000
+reset_timestep 0    
+velocity all create 300 1238123 dist gaussian mom yes
+write_data initiate-state.data  
+#-----------------------------------------------------------------------
+timestep 1
+variable Tdamp equal 100.0*dt
+variable Pdamp equal 1000.0*dt
+thermo 1
+#------------6 guding--------------------------------
+fix bound bound setforce 0 0 0
+velocity bound set 0 0 0 sum no 
+#------------------------------------------------------
+fix   fxnpt epoxy      npt temp 300.0 300.0 ${Tdamp} aniso 1 1 ${Pdamp}
+fix   fxnvt thermo     nvt temp 300.0 300.0 ${Tdamp} #x 1 1 ${Pdamp} y 1 1 ${Pdamp} 
+thermo_style custom step press density pxx pyy pzz
+dump                1 all atom 100 Cu-epoxy-300.atom
+##----------------------------------------------------------------------------
+velocity bound set 0 0 0 sum no 
+fix bound bound setforce 0 0 0
+run 1
+write_restart initiate-state.restart
+##----------------------------------------------------------------------------
+run                 1#500000
+

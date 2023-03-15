@@ -1,0 +1,31 @@
+units real
+dimension 3
+boundary p p p
+atom_style full 
+bond_style hybrid quartic
+pair_style hybrid lj/cut 11
+special_bonds lj 1 1 1
+read_data single-mixture-initiate.data #add append offset 0 0 0 0 0 shift 50 50 50
+replicate 5 5 10
+reset_timestep 0  
+mass *  55.565
+neighbor 2.0 bin
+neigh_modify every 2 delay 0 check yes
+##--------------------------------------------------------------------------
+variable sigma equal 4.570
+variable rccut equal 1.343*v_sigma
+pair_coeff   * *   lj/cut 1.519 ${sigma}
+bond_coeff   1   quartic   5.901 -3.326 0 ${rccut} 102.082 
+##---------------------------------------------------------------------------
+#fix wall all wall/reflect xlo EDGE xhi EDGE ylo EDGE yhi EDGE zlo EDGE zhi EDGE
+velocity all create 300 1238123 dist gaussian mom yes
+minimize 1.0e-4 1.0e-6 100 1000
+timestep 1
+thermo 100
+thermo_style custom step  temp density press
+fix   fxnpt all npt temp 300 300 100 iso 1 1 1000
+write_data initiate-state.data
+dump 1 all custom 1000 dump1.atom id mol type x y z
+run   100000
+write_data single-mixture-final.data
+run 1
