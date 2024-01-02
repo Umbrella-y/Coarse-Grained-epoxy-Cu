@@ -1,4 +1,4 @@
-I retain all rights to the code, and any use directly in writing a paper without any modification is considered plagiarism and plagiarism.
+I retain all rights to the code, and any use directly in writing a paper without any modification is considered plagiarism.
 The code can be used with my consent, or by citing this git link.
 email: xdian126@163.com
 I will pursue plagiarism responsibility as appropriate.
